@@ -1,0 +1,25 @@
+1. Build the executable jar using the following command:
+   ./gradlew clean build
+
+2. Copy the jar file to the location it will be run from or can be accessed from.
+   
+   e.g.
+   cp ./build/libs/HdfsIngest-1.0-SNAPSHOT.jar /home/droy/ingest
+
+3. Copy the ingest.config file to the directory it will be executed from
+
+4. Create the HDFS path for the CSV files and Hive database for table persistence
+   e.g
+   hdfs dfs -mkdir -p /raw/NECS/oncoEMR/database_bk/csv/necs_ingest_raw
+
+   Hive:
+   create database necs_hiveingest_raw LOCATION '/raw/NECS/oncoEMR/database_bk/hive/necs_hiveingest_raw.db'
+
+5. Execute the application :
+
+   spark-submit \
+   --class com.nanthealth.ingest.HdfsIngest \
+   --master yarn-client \
+   --driver-memory 4g \
+   --executor-memory 2g \
+   /home/droy/ingest//HdfsIngest-1.0-SNAPSHOT.jar

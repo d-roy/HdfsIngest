@@ -1,0 +1,81 @@
+buildscript {
+    repositories {
+        maven {
+            url "${nexusUrl}/content/groups/public/"
+        }
+    }
+    dependencies {
+        classpath group: 'org.whitesource', name: 'whitesource-gradle-plugin', version: '0.2.1'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id 'com.github.ben-manes.versions' version '0.13.0'
+    id 'de.gesellix.docker' version '2016-10-06T20-40-07'
+    id 'net.saliman.properties' version '1.4.6'
+}
+
+group 'com.nanthealth.ingest'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'scala'
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url "http://clojars.org/repo"
+    }
+    maven {
+        url "${nexusUrl}/content/groups/public/"
+    }
+    maven {
+        url "https://repository.cloudera.com/artifactory/cloudera-repos/"
+    }
+    maven { url "http://repo1.maven.org/maven2/" }
+    maven { url "https://repository.cloudera.com/artifactory/cloudera-repos" }
+}
+
+ext {
+    log4j2Version = "1.2.17"
+}
+
+
+dependencies {
+    compile group: 'com.microsoft.sqlserver', name: 'sqljdbc4', version: '3.0'
+    compileOnly group: 'org.apache.spark', name: 'spark-sql_2.10', version: '1.6.0'
+    compileOnly group: 'org.apache.spark', name: 'spark-hive_2.10', version: '1.6.0'
+}
+
+jar {
+    zip64 true
+    manifest {
+        attributes 'Main-Class': 'com.nanthealth.ingest.HdfsIngest',
+                'Service-Name': project.name,
+                'Implementation-Version': version,
+                'Built-By': System.getProperty('user.name'),
+                'Built-JDK': System.getProperty('java.version'),
+                'Built-Gradle': gradle.gradleVersion
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+
+}
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+shadowJar.dependsOn(build)

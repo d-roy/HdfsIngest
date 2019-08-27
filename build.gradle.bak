@@ -1,0 +1,64 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
+    }
+}
+
+
+plugins {
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id 'com.github.ben-manes.versions' version '0.13.0'
+    id 'de.gesellix.docker' version '2016-10-06T20-40-07'
+    id 'net.saliman.properties' version '1.4.6'
+}
+
+apply plugin: 'scala'
+apply plugin: 'java'
+
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+group = 'com.nanthealth.ingest'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+    maven { url "http://repo.maven.apache.org/maven2" }
+}
+
+// In this section you declare the dependencies for your production and test code
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile group: 'com.microsoft.sqlserver', name: 'sqljdbc4', version: '3.0'
+    compile "org.scala-lang:scala-library:2.11.8"
+    compile group: 'org.apache.spark', name: 'spark-sql_2.10', version:'1.6.0'
+    compile group: 'org.apache.spark', name: 'spark-hive_2.10', version:'1.6.0'
+    testCompile 'junit:junit:4.12'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.nanthealth.ingest.HdfsIngest',
+                'Service-Name': project.name,
+                'Implementation-Version': version,
+                'Built-By': System.getProperty('user.name'),
+                'Built-JDK': System.getProperty('java.version'),
+                'Built-Gradle': gradle.gradleVersion
+    }
+    from {
+         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
+}
+
+shadowJar {
+    zip64 true
+    mergeServiceFiles()
+}
+
+shadowJar.dependsOn(build)
